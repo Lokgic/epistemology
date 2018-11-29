@@ -1,8 +1,8 @@
-
+import Bayes from './bayes.js'
 
 
 export default ()=>
     (
-        <div>
+        <Bayes>
 
-        </div>);
+        </Bayes>);

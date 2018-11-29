@@ -20,7 +20,7 @@ const Fx = props=>(
 
 
 const getLabel = d=>{
-    console.log(d)
+
     let text =""
     switch(d){
         case "prior":
