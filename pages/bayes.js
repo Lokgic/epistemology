@@ -210,12 +210,43 @@ export default class Bayes extends Component {
             }
 
         }
- 
+        this.bayesUpdateM = this.bayesUpdateM.bind(this)
         this.bayesUpdate = this.bayesUpdate.bind(this)
         this.handlePlus = this.handlePlus.bind(this)
         this.handleMinus = this.handleMinus.bind(this)
         this.resetParm = this.resetParm.bind(this)
         
+    }
+    bayesUpdateM(choice){
+        const evidence = choice
+        const move = evidence === 1? this.conditionalized: this.conditionalized2;
+        const {a,b,c,aea,beb,cec,ea,eb,ec,e} = this.state;
+        let post = {}
+
+        const pe = evidence? e : 1-e
+        const pea = evidence? ea : 1-ea
+        const peb = evidence? eb : 1-eb
+        const pec = evidence? ec : 1-ec
+
+        post.a = getPost(a,pea,pe)
+        post.b = getPost(b,peb,pe)
+        post.c = getPost(c,pec,pe)
+        // if (post.a+post.b+post.c!==1){
+        //     const de = post.a+post.b+post.c
+        //     post.a = post.a/de
+        //     post.a = post.b/de
+        //     post.a = post.c/de
+        // }
+        post.aea = post.a*ea
+        post.beb = post.b*eb
+        post.cec = post.c*ec
+        post.e = post.aea + post.beb + post.cec
+
+     
+        const x = this.state.x + evidence
+        const n = this.state.n + 1
+        this.setState({...post,n,x,move})
+      
     }
     bayesUpdate(){
         const evidence = draw(this.state.real)
@@ -249,7 +280,7 @@ export default class Bayes extends Component {
       
     }
     handlePlus(event){
-        console.log(event.target.value)
+
         const {userParm} = this.state;
         if (userParm[event.target.value] <= 1 && userParm[event.target.value]>=0){
      
@@ -431,7 +462,9 @@ export default class Bayes extends Component {
         return (<MainDisplay>
             {/* <Fx tex={toTex(a)}/> */}
             <ControlArea>
-            <Button onClick={()=>this.bayesUpdate()} >Get evidence and update</Button>
+            <Button onClick={()=>this.bayesUpdate()} >Random Draw</Button>
+            <Button onClick={()=>this.bayesUpdateM(1)} >Success</Button>
+            <Button onClick={()=>this.bayesUpdateM(0)} >Failure</Button>
             <Form>
                 <Label><Fx tex="P(A)"/> </Label>
                 <TextArea type="text" value={round(userParm.a)}/>
