@@ -1,8 +1,7 @@
 import {Component} from "react"
-import { Fraction, toTex } from 'algebra.js';
 import { Node, Context } from 'react-mathjax2';
 import {MainDisplay, theme, Form, Label, TextArea,ControlArea,Button} from '../style/PageSC'
-import { Spring,Transition } from 'react-spring'
+import { Spring } from 'react-spring'
 
 const round = x=>( Math.round(x * 100) / 100)
 
@@ -87,7 +86,7 @@ const getLabel = d=>{
             text = "P(B|~E)";
             break
         case "ereal":
-            text = "Hot!";
+            text = "" ;
             break
         case "nereal":
             text = "Mild.";

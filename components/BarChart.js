@@ -1,8 +1,7 @@
 import {Component} from "react";
-import {scaleLinear} from "d3";
+
 import {GridContent} from '../style/GridSC'
 import {theme} from '../style/PageSC'
-import styled from 'styled-components'
 
 
 

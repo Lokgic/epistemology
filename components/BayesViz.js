@@ -1,6 +1,4 @@
 import {Component} from "react"
-import { Fraction, toTex } from 'algebra.js';
-import { Node, Context } from 'react-mathjax2';
 import {MainDisplay, theme} from '../style/PageSC'
 import { Spring } from 'react-spring'
 
