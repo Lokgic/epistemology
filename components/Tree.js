@@ -10,18 +10,20 @@ const data = {
         "name": "Cancer",
         "color":"red",
         "probability":[0.8,0.2],
+        fx:"P(breast cancer)",
         "children": [
-          { "name": "+" ,"color":"pink",id:"+c"},
-          { "name": "-" ,"color":"orange",id:"-c"}
+          { "name": "+" ,"color":"pink",id:"+c",fx:"P(test positive)"},
+          { "name": "-" ,"color":"orange",id:"-c",fx:"P(test negative)"}
         ]
       },
       { 
         "name": "No Cancer",
         "probability":[0.09,.91],
         "color":"blue",
+        fx:"P(no breast cancer)",
         "children": [
-          { "name": "+" , "color":"purple",id:"+n"},
-          { "name": "-" , "color":"green","id":"-n"}
+          { "name": "+" , "color":"purple",id:"+n",fx:"P(test positive)"},
+          { "name": "-" , "color":"green","id":"-n",fx:"P(test negative)"}
         ]
       }
     ]
@@ -63,7 +65,7 @@ class TreeSpring extends Component{
                 from={{x:root.x,y:root.y-50}}
                 to ={{x:currentNode.x,y:currentNode.y}}
                 delay={loc===0?this.props.delay:0}
-                config={{ precision:0.01}}
+                config={{ precision:0.1, friction:60, tension:280}}
                 onRest={this.goNext}
                 >
                 {
@@ -84,6 +86,7 @@ class TreeSpring extends Component{
 const Branch = ({node,pathSty}) => node.children? 
     (<g>
        {node.children.map((child,j)=>
+            
             <path
                 key={`node_${child.name}_${j}`}
                 d={`M${node.x} ${node.y} L ${child.x} ${child.y}`}
@@ -96,7 +99,9 @@ const Branch = ({node,pathSty}) => node.children?
             <Branch node={child} pathSty={pathSty} key={`child-node-${j}`}
             />)}
         <rect x={node.x-5} y={node.y} width={10*node.data.probability[0]} height={1} fill={node.children[0].data.color}/>
+        <text x={node.x-6} y={node.y+.8} fontSize={1.2} textAnchor="end">{node.children[0].data.fx}={node.data.probability[0]}</text>
         <rect x={node.x+10*node.data.probability[0]-5} y={node.y} width={10*node.data.probability[1]} height={1} fill={node.children[1].data.color}/>
+        <text x={node.x+10*node.data.probability[0]+10*node.data.probability[1]-4} y={node.y+.8} fontSize={1.2} textAnchor="start">{node.children[1].data.fx}={node.data.probability[1]}</text>
     </g>):null;
 
 
@@ -153,7 +158,7 @@ export default class TreeAnimiated extends Component{
                     linkejoin:"round"
                 }}
                 />
-            {dots.map((d,i)=><TreeSpring nodes={root} paths={d} key={`key${i}`} delay={i*150} addPoint={this.addPoint}/>)}
+            {dots.map((d,i)=><TreeSpring nodes={root} paths={d} key={`key${i}`} delay={i*250} addPoint={this.addPoint}/>)}
             {
                 left.map((d,i)=>(
                     <Spring
@@ -203,7 +208,7 @@ export default class TreeAnimiated extends Component{
                     props=><animated.text>{props.prob}</animated.text>
                 }
             </Spring> */}
-            <text x ={50} y = {75} fontSize={"3"}>{prob}</text>
+            <text x ={50} y = {75} fontSize={"1.5"} textAnchor="middle">{`P(breast cancer|test positive) = ${prob}%`}</text>
             </svg>
             );
     }
