@@ -1,45 +1,17 @@
-import {tree as d3Tree, hierarchy as d3Hierarchy, randomNormal} from "d3";
+import {tree as d3Tree, hierarchy as d3Hierarchy, randomNormal, timeout} from "d3";
 import {Component} from "react";
 import { animated,Spring } from 'react-spring'
-
-const data = {
-    "name": "Top Level",
-    "probability":[0.1,0.9],
-    "children": [
-      { 
-        "name": "Cancer",
-        "color":"red",
-        "probability":[0.8,0.2],
-        fx:"P(breast cancer)",
-        "children": [
-          { "name": "+" ,"color":"pink",id:"+c",fx:"P(test positive)"},
-          { "name": "-" ,"color":"orange",id:"-c",fx:"P(test negative)"}
-        ]
-      },
-      { 
-        "name": "No Cancer",
-        "probability":[0.09,.91],
-        "color":"blue",
-        fx:"P(no breast cancer)",
-        "children": [
-          { "name": "+" , "color":"purple",id:"+n",fx:"P(test positive)"},
-          { "name": "-" , "color":"green","id":"-n",fx:"P(test negative)"}
-        ]
-      }
-    ]
-  }
+import styled from 'styled-components'
 
 
-
-
-const tree = d3Tree().size([100,70])
-const root = tree(d3Hierarchy(data, d=>d.children))
 
 
 
 const rnorm = randomNormal(600,500)
 const rn = ()=>parseInt(Math.max(0,rnorm()))
-
+const Button = styled.text`
+  cursor:pointer;
+`
 
 
 
@@ -83,7 +55,7 @@ class TreeSpring extends Component{
     }
 }
 
-const Branch = ({node,pathSty}) => node.children? 
+const Branch = ({node,pathSty,updateNode}) => node.children? 
     (<g>
        {node.children.map((child,j)=>
             
@@ -96,12 +68,28 @@ const Branch = ({node,pathSty}) => node.children?
                 strokeLinejoin={pathSty.linejoin}
             />)}
         {node.children.map((child,j)=>
-            <Branch node={child} pathSty={pathSty} key={`child-node-${j}`}
+            <Branch updateNode={updateNode} node={child} pathSty={pathSty} key={`child-node-${j}`}
             />)}
-        <rect x={node.x-5} y={node.y} width={10*node.data.probability[0]} height={1} fill={node.children[0].data.color}/>
-        <text x={node.x-6} y={node.y+.8} fontSize={1.2} textAnchor="end">{node.children[0].data.fx}={node.data.probability[0]}</text>
-        <rect x={node.x+10*node.data.probability[0]-5} y={node.y} width={10*node.data.probability[1]} height={1} fill={node.children[1].data.color}/>
-        <text x={node.x+10*node.data.probability[0]+10*node.data.probability[1]-4} y={node.y+.8} fontSize={1.2} textAnchor="start">{node.children[1].data.fx}={node.data.probability[1]}</text>
+        <rect x={node.x-5} y={node.y} width={10*node.data.probability[0]} height={3} fill={node.children[0].data.color}/>
+        <Button onClick={()=>updateNode(node,1)} x={node.x-5} y={node.y} fontSize="3">{"<"}</Button>
+        <text x={node.x-6} y={node.y+.8} fontSize={1.5} textAnchor="end">{node.children[0].data.fx} = {node.data.probability[0]}</text>
+        <rect x={node.x+10*node.data.probability[0]-5} y={node.y} width={10*node.data.probability[1]} height={3} fill = {node.children[1].data.color}/>
+        <Button onClick={()=>updateNode(node,0)} x={node.x+10*node.data.probability[0]-6.5+10*node.data.probability[1]} y={node.y} fontSize="3">{">"}</Button>
+        <text x={node.x+10*node.data.probability[0]+10*node.data.probability[1]-4} y={node.y+.8} fontSize={1.5} textAnchor="start">{node.children[1].data.fx} = {node.data.probability[1]}</text>
+        
+        {
+            node.children.map((d,i)=>(
+                <text 
+                    key={`${d}-name-${i}`}
+                    x={d.x} 
+                    y={d.y-7}
+                    fontSize={1.5} 
+                    textAnchor="middle">
+                        {d.data.display}
+                </text>
+            ))
+        }
+        
     </g>):null;
 
 
@@ -122,13 +110,16 @@ export default class TreeAnimiated extends Component{
     constructor(props){
         super(props)
 
+        this.tree = d3Tree().size([100,70])
+        const nodes = this.tree(d3Hierarchy(props.data, d=>d.children))
         this.state = {
-            nodes:root,
-            dots:dotGen(root,1000),
+            nodes,
+            dots:dotGen(nodes,1000),
             left:[],
             right:[]
         }
         this.addPoint = this.addPoint.bind(this);
+        this.updateNode = this.updateNode.bind(this);
     }
     addPoint(node){
         if (node.data.id==="+c") this.setState({left:[...this.state.left,
@@ -138,10 +129,19 @@ export default class TreeAnimiated extends Component{
             {from:{x:node.x, y:node.y},color:node.data.color}]})
         
     }
+    updateNode(node,index){
+
+        node.data.probability[index] = Math.round(Math.min(node.data.probability[index]+0.05,1 ) * 100) /100
+        node.data.probability[1-index] = Math.round((1 - node.data.probability[index]) * 100) /100
+        this.setState({left:[],right:[],dots:[]})
+        timeout(()=>this.setState({dots:dotGen(this.state.nodes,1000)}),500)
+
+    }
     
 
     render(){
         const {nodes,dots,left,right} = this.state;
+
         const statDimension = {
             r:1,
             yStart:80
@@ -157,8 +157,17 @@ export default class TreeAnimiated extends Component{
                     linecap:"round",
                     linkejoin:"round"
                 }}
+                updateNode={this.updateNode}
                 />
-            {dots.map((d,i)=><TreeSpring nodes={root} paths={d} key={`key${i}`} delay={i*250} addPoint={this.addPoint}/>)}
+            {dots.map((d,i)=><TreeSpring 
+                nodes={nodes} 
+                paths={d} 
+                key={`key${i}`} 
+                delay={i*250} 
+                addPoint={this.addPoint}
+                
+                
+                />)}
             {
                 left.map((d,i)=>(
                     <Spring
@@ -199,16 +208,7 @@ export default class TreeAnimiated extends Component{
                     </Spring>
                 ))
             }
-            {/* <Spring
-                from = {{prob:0}}
-                to ={{prob}}
-                native
-                >
-                {
-                    props=><animated.text>{props.prob}</animated.text>
-                }
-            </Spring> */}
-            <text x ={50} y = {75} fontSize={"1.5"} textAnchor="middle">{`P(breast cancer|test positive) = ${prob}%`}</text>
+            <text x ={50} y = {75} fontSize={"2"} textAnchor="middle">{`P(breast cancer|test positive) = ${prob}%`}</text>
             </svg>
             );
     }
